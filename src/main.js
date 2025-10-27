@@ -1,6 +1,7 @@
-import './style.css'; // Giả sử bạn có file style.css cơ bản
+import './style.css'; 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 
 // 1. ================= CÀI ĐẶT CƠ BẢN =================
 // Scene
@@ -70,7 +71,7 @@ dirLight.shadow.camera.far = 50;
 
 scene.add(dirLight);
 
-// -------------------- Ground (large repeating canvas texture) --------------------
+// -------------------- Ground (kết cấu canvas lặp vô hạn) --------------------
 // Create a simple canvas-based repeating texture to simulate ground (grass/earth feel)
 const groundCanvas = document.createElement('canvas');
 groundCanvas.width = 512;
@@ -88,7 +89,7 @@ for (let y = 0; y < 512; y += 64) {
 const groundTexture = new THREE.CanvasTexture(groundCanvas);
 groundTexture.wrapS = THREE.RepeatWrapping;
 groundTexture.wrapT = THREE.RepeatWrapping;
-groundTexture.repeat.set(200, 200); // repeat many times for large plane
+groundTexture.repeat.set(200, 200); 
 
 const groundMat = new THREE.MeshStandardMaterial({ map: groundTexture, roughness: 1 });
 const groundGeo = new THREE.PlaneGeometry(1000, 1000);
@@ -97,6 +98,31 @@ ground.rotation.x = -Math.PI / 2;
 ground.position.y = 0; // sit on grid
 ground.receiveShadow = true;
 scene.add(ground);
+
+// --- TẠO SÔNG PHẢN CHIẾU ---
+
+// 1. Hình dạng của sông: Một mặt phẳng (Plane)
+// Dài 1000 (dọc trục X) và rộng 50 (dọc trục Z)
+const riverGeometry = new THREE.PlaneGeometry(1000, 50);
+
+// 2. Tạo đối tượng Reflector (Tấm gương)
+const river = new Reflector(riverGeometry, {
+  clipBias: 0.003, // Dùng để tránh lỗi tự phản chiếu
+  textureWidth: window.innerWidth * window.devicePixelRatio,
+  textureHeight: window.innerHeight * window.devicePixelRatio,
+  color: 0x334455, // Màu sẫm cho nước
+  // (Bạn cũng có thể thêm 'recursion: 1' nếu muốn sông phản chiếu cả cái bóng)
+});
+
+// 3. Đặt vị trí cho sông
+// Xoay nó nằm phẳng, giống như mặt đất
+river.rotation.x = -Math.PI / 2;
+// Đặt nó thấp hơn mặt đất một chút (0.0) để tránh bị "z-fighting" (nhấp nháy)
+river.position.y = 0.1;
+// (Tùy chọn) Bạn có thể dịch chuyển nó dọc trục Z nếu muốn
+// river.position.z = 20; 
+
+scene.add(river);
 
 // 2. ================= TẠO MÁY BAY =================
 // Tạo một Group. Đây là "vật chứa" cho tất cả các bộ phận của máy bay.
